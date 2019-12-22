@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mapper namespace="cn.javadog.sd.mybatis.spring.TestMapper">
+
+    <cache/>
+
+    <select id="findTest" resultType="int">
+        SELECT<include refid="includedSql"/>
+    </select>
+
+    <sql id="includedSql">1</sql>
+
+    <!-- 就是为了测试异常的 -->
+    <select id="findFail" resultType="int">
+        SELECT 'fail'
+    </select>
+
+    <insert id="insertTest">
+        INSERT #{test} INTO test
+    </insert>
+
+    <insert id="insertFail">
+        INSERT fail
+    </insert>
+</mapper>

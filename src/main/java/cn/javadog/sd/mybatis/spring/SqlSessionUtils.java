@@ -82,7 +82,7 @@ public final class SqlSessionUtils {
   }
 
   /**
-   * 册 SqlSession holder 到 TransactionSynchronizationManager 中，前提是同步器是激活的(也就是说，该会话对应的事务是激活的)
+   * 注册 SqlSession holder 到 TransactionSynchronizationManager 中，前提是同步器是激活的(也就是说，该会话对应的事务是激活的)
    *
    * Note: 由 Environment 使用的 DataSource 必须支持同步，使用的钥匙是事务对象，不管这个事务对象是由谁创建的。进一步说，如果后面这个会话
    *  执行过程中抛出异常，这个事务对象将会关闭与此会话管理的连接，并进行回滚
