@@ -7,11 +7,10 @@ import java.util.List;
 
 import cn.javadog.sd.mybatis.executor.BatchResult;
 import cn.javadog.sd.mybatis.session.ExecutorType;
-import cn.javadog.sd.mybatis.session.SqlSession;
 import cn.javadog.sd.mybatis.session.SqlSessionFactory;
-import cn.javadog.sd.mybatis.spring.logging.Logger;
-import cn.javadog.sd.mybatis.spring.logging.LoggerFactory;
 import cn.javadog.sd.mybatis.spring.SqlSessionTemplate;
+import cn.javadog.sd.mybatis.support.logging.Log;
+import cn.javadog.sd.mybatis.support.logging.LogFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.convert.converter.Converter;
@@ -19,91 +18,64 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 
 /**
- * {@code ItemWriter} that uses the batching features from
- * {@code SqlSessionTemplate} to execute a batch of statements for all items
- * provided.
- * <p>
- * Provided to facilitate the migration from Spring-Batch iBATIS 2 writers to MyBatis 3.
- * <p>
- * The user must provide a MyBatis statement id that points to the SQL statement defined
- * in the MyBatis.
- * <p>
- * It is expected that {@link #write(List)} is called inside a transaction. If it is not
- * each statement call will be autocommitted and flushStatements will return no results.
- * <p>
- * The writer is thread safe after its properties are set (normal singleton
- * behavior), so it can be used to write in multiple concurrent transactions.
+ * @author 余勇
+ * @date 2019-12-22 14:38
  *
- * @author Eduardo Macarron
- * 
- * @since 1.1.0
+ * MyBatis 批量写入器
  */
 public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBean {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(MyBatisBatchItemWriter.class);
-
-  private SqlSessionTemplate sqlSessionTemplate;
-
-  private String statementId;
-
-  private boolean assertUpdates = true;
-
-  private Converter<T, ?> itemToParameterConverter = new PassThroughConverter<>();
+  /**
+   * 日志打印器
+   */
+  private static final Log LOGGER = LogFactory.getLog(MyBatisBatchItemWriter.class);
 
   /**
-   * Public setter for the flag that determines whether an assertion is made
-   * that all items cause at least one row to be updated.
-   *
-   * @param assertUpdates the flag to set. Defaults to true;
+   * SQL会话模板
    */
+  private SqlSessionTemplate sqlSessionTemplate;
+
+  /**
+   * 会话ID，与 queryId 一个性质
+   */
+  private String statementId;
+
+  /**
+   * 是否校验更新操作，因为是批量写入，每条插入语句必定有影响的行数，咱校验的就是这
+   */
+  private boolean assertUpdates = true;
+
+  /**
+   * 参数转换器
+   */
+  private Converter<T, ?> itemToParameterConverter = new PassThroughConverter<>();
+
+  /*一些set*/
+
   public void setAssertUpdates(boolean assertUpdates) {
     this.assertUpdates = assertUpdates;
   }
 
-  /**
-   * Public setter for {@link SqlSessionFactory} for injection purposes.
-   *
-   * @param sqlSessionFactory a factory object for the {@link SqlSession}.
-   */
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     if (sqlSessionTemplate == null) {
       this.sqlSessionTemplate = new SqlSessionTemplate(sqlSessionFactory, ExecutorType.BATCH);
     }
   }
 
-  /**
-   * Public setter for the {@link SqlSessionTemplate}.
-   *
-   * @param sqlSessionTemplate a template object for use the {@link SqlSession} on the Spring managed transaction
-   */
   public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
     this.sqlSessionTemplate = sqlSessionTemplate;
   }
 
-  /**
-   * Public setter for the statement id identifying the statement in the SqlMap
-   * configuration file.
-   *
-   * @param statementId the id for the statement
-   */
   public void setStatementId(String statementId) {
     this.statementId = statementId;
   }
 
-  /**
-   * Public setter for a converter that converting item to parameter object.
-   * <p>
-   * By default implementation, an item does not convert.
-   *
-   * @param itemToParameterConverter a converter that converting item to parameter object
-   * @since 2.0.0
-   */
   public void setItemToParameterConverter(Converter<T, ?> itemToParameterConverter) {
     this.itemToParameterConverter = itemToParameterConverter;
   }
 
   /**
-   * Check mandatory properties - there must be an SqlSession and a statementId.
+   * 强制校验必需的属性
    */
   @Override
   public void afterPropertiesSet() {
@@ -114,21 +86,23 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
   }
 
   /**
-   * {@inheritDoc}
+   * 批量写入
    */
   @Override
   public void write(final List<? extends T> items) {
 
     if (!items.isEmpty()) {
-      LOGGER.debug(() -> "Executing batch with " + items.size() + " items.");
+      LOGGER.debug("Executing batch with " + items.size() + " items.");
 
+      // 遍历 items 数组，提交到 sqlSessionTemplate 中
       for (T item : items) {
         sqlSessionTemplate.update(statementId, itemToParameterConverter.convert(item));
       }
-
+      // 刷入批处理
       List<BatchResult> results = sqlSessionTemplate.flushStatements();
 
       if (assertUpdates) {
+        // 如果有多个返回结果集，也就是存储过程的情况，抛出 InvalidDataAccessResourceUsageException 异常
         if (results.size() != 1) {
           throw new InvalidDataAccessResourceUsageException("Batch execution returned invalid results. " +
               "Expected 1 but number of BatchResult objects returned was " + results.size());
@@ -136,6 +110,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
 
         int[] updateCounts = results.get(0).getUpdateCounts();
 
+        // 遍历执行结果，若存在未更新的情况，则抛出 EmptyResultDataAccessException 异常
         for (int i = 0; i < updateCounts.length; i++) {
           int value = updateCounts[i];
           if (value == 0) {

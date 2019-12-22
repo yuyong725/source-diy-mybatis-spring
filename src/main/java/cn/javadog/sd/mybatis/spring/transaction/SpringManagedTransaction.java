@@ -14,19 +14,6 @@ import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * {@code SpringManagedTransaction} handles the lifecycle of a JDBC connection.
- * It retrieves a connection from Spring's transaction manager and returns it back to it
- * when it is no longer needed.
- * <p>
- * If Spring's transaction handling is active it will no-op all commit/rollback/close calls
- * assuming that the Spring transaction manager will do the job.
- * <p>
- * If it is not it will behave like {@code JdbcTransaction}.
- *
- * @author Hunter Presnall
- * @author Eduardo Macarron
- */
-/**
  * @author 余勇
  * @date 2019-12-21 21:44
  *

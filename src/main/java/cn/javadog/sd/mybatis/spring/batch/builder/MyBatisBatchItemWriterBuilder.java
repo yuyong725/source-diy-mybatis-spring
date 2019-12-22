@@ -8,11 +8,10 @@ import cn.javadog.sd.mybatis.spring.batch.MyBatisBatchItemWriter;
 import org.springframework.core.convert.converter.Converter;
 
 /**
- * A builder for the {@link MyBatisBatchItemWriter}.
+ * @author 余勇
+ * @date 2019-12-22 14:46
  *
- * @author Kazuki Shimizu
- * @since 2.0.0
- * @see MyBatisBatchItemWriter
+ * {@link MyBatisBatchItemWriter} 的构造器，代码相当简单
  */
 public class MyBatisBatchItemWriterBuilder<T> {
 
@@ -22,73 +21,32 @@ public class MyBatisBatchItemWriterBuilder<T> {
   private Boolean assertUpdates;
   private Converter<T, ?> itemToParameterConverter;
 
-  /**
-   * Set the {@link SqlSessionTemplate} to be used by writer for database access.
-   *
-   * @param sqlSessionTemplate the {@link SqlSessionTemplate} to be used by writer for database access
-   * @return this instance for method chaining
-   * @see MyBatisBatchItemWriter#setSqlSessionTemplate(SqlSessionTemplate)
-   */
   public MyBatisBatchItemWriterBuilder<T> sqlSessionTemplate(
       SqlSessionTemplate sqlSessionTemplate) {
     this.sqlSessionTemplate = sqlSessionTemplate;
     return this;
   }
 
-  /**
-   * Set the {@link SqlSessionFactory} to be used by writer for database access.
-   *
-   * @param sqlSessionFactory the {@link SqlSessionFactory} to be used by writer for database access
-   * @return this instance for method chaining
-   * @see MyBatisBatchItemWriter#setSqlSessionFactory(SqlSessionFactory)
-   */
   public MyBatisBatchItemWriterBuilder<T> sqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     this.sqlSessionFactory = sqlSessionFactory;
     return this;
   }
 
-  /**
-   * Set the statement id identifying the statement in the SqlMap configuration file.
-   *
-   * @param statementId the id for the statement
-   * @return this instance for method chaining
-   * @see MyBatisBatchItemWriter#setStatementId(String)
-   */
   public MyBatisBatchItemWriterBuilder<T> statementId(String statementId) {
     this.statementId = statementId;
     return this;
   }
 
-  /**
-   * The flag that determines whether an assertion is made that all items cause at least one row to
-   * be updated.
-   *
-   * @param assertUpdates the flag to set. Defaults to true
-   * @return this instance for method chaining
-   * @see MyBatisBatchItemWriter#setAssertUpdates(boolean)
-   */
   public MyBatisBatchItemWriterBuilder<T> assertUpdates(boolean assertUpdates) {
     this.assertUpdates = assertUpdates;
     return this;
   }
 
-  /**
-   * Set a converter that converting item to parameter object.
-   *
-   * @param itemToParameterConverter a converter that converting item to parameter object
-   * @return this instance for method chaining
-   * @see MyBatisBatchItemWriter#setItemToParameterConverter(Converter)
-   */
   public MyBatisBatchItemWriterBuilder<T> itemToParameterConverter(Converter<T, ?> itemToParameterConverter) {
     this.itemToParameterConverter = itemToParameterConverter;
     return this;
   }
 
-  /**
-   * Returns a fully built {@link MyBatisBatchItemWriter}.
-   *
-   * @return the writer
-   */
   public MyBatisBatchItemWriter<T> build() {
     MyBatisBatchItemWriter<T> writer = new MyBatisBatchItemWriter<>();
     writer.setSqlSessionTemplate(this.sqlSessionTemplate);

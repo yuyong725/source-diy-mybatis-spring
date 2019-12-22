@@ -249,21 +249,20 @@ public final class SqlSessionUtils {
     }
 
     /**
-     *
+     * 在事务提交之前，调用 SqlSession#commit() 方法，提交事务。
+     * 虽然说，Spring 自身也会调用 Connection#commit() 方法，进行事务的提交。
+     * 但是，SqlSession#commit() 方法中，不仅仅有事务的提交，还有提交批量操作，刷新本地缓存等等。
      */
     @Override
     public void beforeCommit(boolean readOnly) {
-      // Connection commit or rollback will be handled by ConnectionSynchronization or
-      // DataSourceTransactionManager.
-      // But, do cleanup the SqlSession / Executor, including flushing BATCH statements so
-      // they are actually executed.
-      // SpringManagedTransaction will no-op the commit over the jdbc connection
-      // TODO This updates 2nd level caches but the tx may be rolledback later on! 
+      // TODO 这将会更新二级缓存，但是事务可能回滚，也就是造成二级缓存脏数据
       if (TransactionSynchronizationManager.isActualTransactionActive()) {
         try {
           LOGGER.debug("Transaction synchronization committing SqlSession [" + this.holder.getSqlSession() + "]");
+          // 提交事务
           this.holder.getSqlSession().commit();
         } catch (PersistenceException p) {
+          // 如果发生异常，则进行转换，并抛出异常
           if (this.holder.getPersistenceExceptionTranslator() != null) {
             DataAccessException translated = this.holder
                 .getPersistenceExceptionTranslator()
@@ -278,35 +277,42 @@ public final class SqlSessionUtils {
     }
 
     /**
-     * {@inheritDoc}
+     * 提交事务完成之前，关闭 SqlSession 对象
+     * TransactionSynchronization 的事务提交的执行顺序是：beforeCommit => beforeCompletion => 提交操作 => afterCompletion =>
+     * afterCommit。
+     * 因为，beforeCompletion 方法是在 beforeCommit 之后执行，并且在 beforeCommit 已经提交了事务，所以此处可以放心关闭 SqlSession 对象了
+     * 要执行关闭操作之前，需要先调用 SqlSessionHolder#isOpen() 方法来判断，是否处于开启状态
      */
     @Override
     public void beforeCompletion() {
-      // Issue #18 Close SqlSession and deregister it now
-      // because afterCompletion may be called from a different thread
+      // Issue #18 关闭会话，取消注册。因为 afterCompletion 可能是由别的线程调用的
       if (!this.holder.isOpen()) {
         LOGGER.debug("Transaction synchronization deregistering SqlSession [" + this.holder.getSqlSession() + "]");
+        // 取消当前线程的绑定的 SqlSessionHolder 对象
         TransactionSynchronizationManager.unbindResource(sessionFactory);
+        // 标记无效
         this.holderActive = false;
         LOGGER.debug("Transaction synchronization closing SqlSession [" + this.holder.getSqlSession() + "]");
+        // 关闭 SqlSession 对象
         this.holder.getSqlSession().close();
       }
     }
 
     /**
-     * {@inheritDoc}
+     * 解决可能出现的跨线程的情况，简单理解下就好
      */
     @Override
     public void afterCompletion(int status) {
+      // 处于有效状态
       if (this.holderActive) {
-        // afterCompletion may have been called from a different thread
-        // so avoid failing if there is nothing in this one
+        // afterCompletion 可能是由别的线程调用的，因此为了避免失败，将上面的逻辑再走一波
         LOGGER.debug("Transaction synchronization deregistering SqlSession [" + this.holder.getSqlSession() + "]");
         TransactionSynchronizationManager.unbindResourceIfPossible(sessionFactory);
         this.holderActive = false;
         LOGGER.debug("Transaction synchronization closing SqlSession [" + this.holder.getSqlSession() + "]");
         this.holder.getSqlSession().close();
       }
+      // 重置
       this.holder.reset();
     }
   }

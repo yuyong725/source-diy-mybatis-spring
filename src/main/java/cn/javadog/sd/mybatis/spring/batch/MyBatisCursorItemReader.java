@@ -15,24 +15,51 @@ import org.springframework.batch.item.support.AbstractItemCountingItemStreamItem
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- * @author Guillaume Darmont / guillaume@dropinocean.com
+ * 实现 InitializingBean 接口，基于 Cursor 的 MyBatis 的读取器
  */
 public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamItemReader<T> implements InitializingBean {
 
+  /**
+   * 查询ID
+   */
   private String queryId;
 
+  /**
+   * SQL会话工厂
+   */
   private SqlSessionFactory sqlSessionFactory;
+
+  /**
+   * SQL会话
+   */
   private SqlSession sqlSession;
 
+  /**
+   * 参数值映射
+   */
   private Map<String, Object> parameterValues;
 
+  /**
+   * 游标
+   */
   private Cursor<T> cursor;
+
+  /**
+   * 游标迭代器
+   */
   private Iterator<T> cursorIterator;
 
+  /**
+   * 构造
+   */
   public MyBatisCursorItemReader() {
     setName(getShortName(MyBatisCursorItemReader.class));
   }
 
+
+  /**
+   * 获取下一条
+   */
   @Override
   protected T doRead() {
     T next = null;
@@ -42,6 +69,9 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
     return next;
   }
 
+  /**
+   * 打开游标的迭代器
+   */
   @Override
   protected void doOpen() {
     Map<String, Object> parameters = new HashMap<>();
@@ -50,10 +80,14 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
     }
 
     sqlSession = sqlSessionFactory.openSession(ExecutorType.SIMPLE);
+    // 查询，返回 Cursor 对象
     cursor = sqlSession.selectCursor(queryId, parameters);
     cursorIterator = cursor.iterator();
   }
 
+  /**
+   * 关闭游标和会话
+   */
   @Override
   protected void doClose() throws Exception {
     if (cursor != null) {
@@ -66,9 +100,7 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
   }
 
   /**
-   * Check mandatory properties.
-   *
-   * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
+   * 校验必需的属性非空
    */
   @Override
   public void afterPropertiesSet() throws Exception {
@@ -76,31 +108,16 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
     notNull(queryId, "A queryId is required.");
   }
 
-  /**
-   * Public setter for {@link SqlSessionFactory} for injection purposes.
-   *
-   * @param sqlSessionFactory a factory object for the {@link SqlSession}.
-   */
+  /*相应的set*/
+
   public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     this.sqlSessionFactory = sqlSessionFactory;
   }
 
-  /**
-   * Public setter for the statement id identifying the statement in the SqlMap
-   * configuration file.
-   *
-   * @param queryId the id for the statement
-   */
   public void setQueryId(String queryId) {
     this.queryId = queryId;
   }
 
-  /**
-   * The parameter values to be used for the query execution.
-   *
-   * @param parameterValues the values keyed by the parameter named used in
-   *                        the query string.
-   */
   public void setParameterValues(Map<String, Object> parameterValues) {
     this.parameterValues = parameterValues;
   }

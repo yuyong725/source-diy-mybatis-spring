@@ -11,27 +11,27 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.transaction.TransactionException;
 
 /**
- * Default exception translator.
+ * @author 余勇
+ * @date 2019-12-22 14:10
  *
- * Translates MyBatis SqlSession returned exception into a Spring
- * {@code DataAccessException} using Spring's {@code SQLExceptionTranslator}
- * Can load {@code SQLExceptionTranslator} eagerly or when the
- * first exception is translated.
- *
- * @author Eduardo Macarron
+ * 异常转换器。
+ * 将 MyBatis SqlSession 的异常转换成Spring的异常
  */
 public class MyBatisExceptionTranslator implements PersistenceExceptionTranslator {
 
+  /**
+   * 数据源
+   */
   private final DataSource dataSource;
 
+  /**
+   * 异常翻译器
+   */
   private SQLExceptionTranslator exceptionTranslator;
 
   /**
-   * Creates a new {@code DataAccessExceptionTranslator} instance.
-   *
-   * @param dataSource DataSource to use to find metadata and establish which error codes are usable.
-   * @param exceptionTranslatorLazyInit if true, the translator instantiates internal stuff only the first time will
-   *        have the need to translate exceptions.
+   * 构造函数
+   * @param exceptionTranslatorLazyInit 是否懒加载
    */
   public MyBatisExceptionTranslator(DataSource dataSource, boolean exceptionTranslatorLazyInit) {
     this.dataSource = dataSource;
@@ -42,13 +42,11 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
   }
 
   /**
-   * {@inheritDoc}
+   * 转换异常
    */
   @Override
   public DataAccessException translateExceptionIfPossible(RuntimeException e) {
     if (e instanceof PersistenceException) {
-      // Batch exceptions come inside another PersistenceException
-      // recursion has a risk of infinite loop so better make another if
       if (e.getCause() instanceof PersistenceException) {
         e = (PersistenceException) e.getCause();
       }
@@ -64,7 +62,7 @@ public class MyBatisExceptionTranslator implements PersistenceExceptionTranslato
   }
 
   /**
-   * Initializes the internal translator reference.
+   * 初始化异常转换器的真正实现
    */
   private synchronized void initExceptionTranslator() {
     if (this.exceptionTranslator == null) {

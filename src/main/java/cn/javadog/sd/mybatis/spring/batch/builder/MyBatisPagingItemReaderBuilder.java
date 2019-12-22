@@ -6,13 +6,11 @@ import java.util.Optional;
 import cn.javadog.sd.mybatis.session.SqlSessionFactory;
 import cn.javadog.sd.mybatis.spring.batch.MyBatisPagingItemReader;
 
-
 /**
- * A builder for the {@link MyBatisPagingItemReader}.
+ * @author 余勇
+ * @date 2019-12-22 14:47
  *
- * @author Kazuki Shimizu
- * @since 2.0.0
- * @see MyBatisPagingItemReader
+ * {@link MyBatisPagingItemReader} 的构造器，代码相当简单
  */
 public class MyBatisPagingItemReaderBuilder<T> {
 
@@ -23,85 +21,36 @@ public class MyBatisPagingItemReaderBuilder<T> {
   private Boolean saveState;
   private Integer maxItemCount;
 
-  /**
-   * Set the {@link SqlSessionFactory} to be used by writer for database access.
-   *
-   * @param sqlSessionFactory the {@link SqlSessionFactory} to be used by writer for database access
-   * @return this instance for method chaining
-   * @see MyBatisPagingItemReader#setSqlSessionFactory(SqlSessionFactory)
-   */
   public MyBatisPagingItemReaderBuilder<T> sqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
     this.sqlSessionFactory = sqlSessionFactory;
     return this;
   }
 
-  /**
-   * Set the query id identifying the statement in the SqlMap configuration file.
-   *
-   * @param queryId the id for the query
-   * @return this instance for method chaining
-   * @see MyBatisPagingItemReader#setQueryId(String)
-   */
   public MyBatisPagingItemReaderBuilder<T> queryId(String queryId) {
     this.queryId = queryId;
     return this;
   }
 
-  /**
-   * Set the parameter values to be used for the query execution.
-   *
-   * @param parameterValues the parameter values to be used for the query execution
-   * @return this instance for method chaining
-   * @see MyBatisPagingItemReader#setParameterValues(Map)
-   */
   public MyBatisPagingItemReaderBuilder<T> parameterValues(Map<String, Object> parameterValues) {
     this.parameterValues = parameterValues;
     return this;
   }
 
-  /**
-   * The number of records to request per page/query. Defaults to 10. Must be greater than zero.
-   *
-   * @param pageSize number of items
-   * @return this instance for method chaining
-   * @see org.springframework.batch.item.database.AbstractPagingItemReader#setPageSize(int)
-   */
   public MyBatisPagingItemReaderBuilder<T> pageSize(int pageSize) {
     this.pageSize = pageSize;
     return this;
   }
 
-  /**
-   * Configure if the state of the {@link org.springframework.batch.item.ItemStreamSupport} should
-   * be persisted within the {@link org.springframework.batch.item.ExecutionContext} for restart
-   * purposes.
-   *
-   * @param saveState defaults to true
-   * @return The current instance of the builder.
-   * @see org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader#setSaveState(boolean)
-   */
   public MyBatisPagingItemReaderBuilder<T> saveState(boolean saveState) {
     this.saveState = saveState;
     return this;
   }
 
-  /**
-   * Configure the max number of items to be read.
-   *
-   * @param maxItemCount the max items to be read
-   * @return The current instance of the builder.
-   * @see org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader#setMaxItemCount(int)
-   */
   public MyBatisPagingItemReaderBuilder<T> maxItemCount(int maxItemCount) {
     this.maxItemCount = maxItemCount;
     return this;
   }
 
-  /**
-   * Returns a fully built {@link MyBatisPagingItemReader}.
-   *
-   * @return the reader
-   */
   public MyBatisPagingItemReader<T> build() {
     MyBatisPagingItemReader<T> reader = new MyBatisPagingItemReader<>();
     reader.setSqlSessionFactory(this.sqlSessionFactory);

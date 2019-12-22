@@ -3,16 +3,13 @@ package cn.javadog.sd.mybatis.spring;
 import org.springframework.dao.UncategorizedDataAccessException;
 
 /**
- * MyBatis specific subclass of {@code UncategorizedDataAccessException}, for MyBatis system errors that do
- * not match any concrete {@code org.springframework.dao} exceptions.
+ * @author 余勇
+ * @date 2019-12-22 14:05
  *
- * In MyBatis 3 {@code org.apache.ibatis.exceptions.PersistenceException} is a {@code RuntimeException},
- * but using this wrapper class to bring everything under a single hierarchy will be easier for client code to
- * handle.
- *
- * @author Hunter Presnall
+ * MyBatis版本的{@code UncategorizedDataAccessException}，用于包装 {@code org.springframework.dao} 下的异常。
+ * Mybatis 3 中的 PersistenceException 是一个运行时异常，通过此包装类，使得所有异常在一个level，更方便处理
  */
-@SuppressWarnings("squid:MaximumInheritanceDepth") // It is the intended design
+@SuppressWarnings("squid:MaximumInheritanceDepth")
 public class MyBatisSystemException extends UncategorizedDataAccessException {
 
   private static final long serialVersionUID = -5284728621670758939L;
